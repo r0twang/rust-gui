@@ -1,5 +1,6 @@
 use iced::{Application, Command, Element, Length, Settings};
 use iced::widget::{Button, Column, Container, Row, Text};
+use iced::widget::shader::wgpu::BindingType::Buffer;
 
 struct GameState {
     board: [[Option<Player>; 3]; 3],
@@ -15,6 +16,7 @@ enum Player {
 #[derive(Clone, Debug)]
 enum Message {
     MakeMove(usize, usize),
+    CleanBoard
 }
 
 impl Default for GameState {
@@ -86,6 +88,11 @@ impl GameState {
 
         None
     }
+
+    fn clean_board(&mut self) {
+        self.board = [[None; 3]; 3];
+        self.current_player = Player::X;
+    }
 }
 
 struct TicTacToe {
@@ -115,6 +122,9 @@ impl Application for TicTacToe {
                     }
                 }
             }
+            Message::CleanBoard => {
+                self.game_state.clean_board();
+            }
         }
         Command::none()
     }
@@ -143,6 +153,12 @@ impl Application for TicTacToe {
             column = column.push(row_widget);
         }
 
+        let clear_button = Button::new(Text::new("Clear board"))
+            .on_press(Message::CleanBoard)
+            .width(Length::Shrink);
+
+        column = column.push(clear_button);
+
         Container::new(column)
             .width(Length::Fill)
             .height(Length::Fill)
@@ -152,5 +168,5 @@ impl Application for TicTacToe {
 
 fn main() -> iced::Result {
     TicTacToe::run(Settings::default())
-    
 }
+
