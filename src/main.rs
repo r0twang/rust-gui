@@ -167,11 +167,11 @@ impl Application for MenuApp {
                 MenuMessage::Select(option) => match option {
                     MenuOption::Option1 => {
                         self.current_view = View::Option1; // Go to Option 1 view (Single player)
-                        self.tic_tac_toe.game_over = false;
-                        self.tic_tac_toe.game_state.clean_board();
                     }
                     MenuOption::Option2 => {
-                        self.current_view = View::Option2; // Go to Option 2 view
+                        self.current_view = View::Option2; // Go to Option 1 view (Multiplayer)
+                        self.tic_tac_toe.game_over = false;
+                        self.tic_tac_toe.game_state.clean_board();
                     }
                     MenuOption::Option3 => {
                         std::process::exit(0); // Exit the application
@@ -206,8 +206,8 @@ impl Application for MenuApp {
     fn view(&self) -> Element<Self::Message> {
         match self.current_view {
             View::Menu => self.view_menu(),
-            View::Option1 => self.tic_tac_toe.view(),
-            View::Option2 => self.view_option2()
+            View::Option1 => self.view_option1(),
+            View::Option2 => self.tic_tac_toe.view()
         }
     }
 }
@@ -242,13 +242,13 @@ impl MenuApp {
             .into()
     }
 
-    fn view_option2(&self) -> Element<Message> {
+    fn view_option1(&self) -> Element<Message> {
         let back_button = Button::new(Text::new("Back to Menu"))
             .on_press(Message::Menu(MenuMessage::BackToMenu))
             .width(Length::Shrink);
 
         let content = Column::new()
-            .push(Text::new("This is Option 2 view"))
+            .push(Text::new("This is Option 1 view"))
             .push(back_button)
             .spacing(20)
             .padding(20)
