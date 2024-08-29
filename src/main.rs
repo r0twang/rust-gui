@@ -61,6 +61,7 @@ impl Default for TicTacToe {
     fn default() -> Self {
         TicTacToe {
             game_state: GameState::default(),
+            game_over: false,
         }
     }
 }
@@ -143,6 +144,7 @@ impl GameState {
 
 struct TicTacToe {
     game_state: GameState,
+    game_over: bool,
 }
 
 impl Application for MenuApp {
@@ -156,7 +158,7 @@ impl Application for MenuApp {
     }
 
     fn title(&self) -> String {
-        String::from("GUI Menu Example")
+        String::from("Tic Tac Toe")
     }
 
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
@@ -165,6 +167,8 @@ impl Application for MenuApp {
                 MenuMessage::Select(option) => match option {
                     MenuOption::Option1 => {
                         self.current_view = View::Option1; // Go to Option 1 view (Single player)
+                        self.tic_tac_toe.game_over = false;
+                        self.tic_tac_toe.game_state.clean_board();
                     }
                     MenuOption::Option2 => {
                         self.current_view = View::Option2; // Go to Option 2 view
@@ -181,14 +185,16 @@ impl Application for MenuApp {
                 // Update TicTacToe game state with mutable reference to game_state
                 match tic_tac_toe_message {
                     TicTacToeMessage::MakeMove(row, col) => {
-                        if self.tic_tac_toe.game_state.make_move(row, col) {
+                        if !self.tic_tac_toe.game_over && self.tic_tac_toe.game_state.make_move(row, col) {
                             if let Some(player) = self.tic_tac_toe.game_state.check_win() {
                                 println!("Player {:?} wins!", player);
+                                self.tic_tac_toe.game_over = true;
                             }
                         }
                     }
                     TicTacToeMessage::CleanBoard => {
                         self.tic_tac_toe.game_state.clean_board();
+                        self.tic_tac_toe.game_over = false;
                     }
                 }
             }
@@ -270,6 +276,15 @@ impl TicTacToe {
                     Some(Player::O) => "O",
                     None => "",
                 };
+
+                let mut button: Button<Message> = Button::new(Text::new(text))
+                    .width(Length::Fixed(50.0))
+                    .height(Length::Fixed(50.0));
+
+                // Disable button if the game is over
+                if !self.game_over {
+                    button = button.on_press(Message::TicTacToe(TicTacToeMessage::MakeMove(row_index, col)));
+                }
 
                 row_widget = row_widget.push(
                     Button::new(Text::new(text))
