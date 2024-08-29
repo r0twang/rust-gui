@@ -277,15 +277,6 @@ impl TicTacToe {
                     None => "",
                 };
 
-                let mut button: Button<Message> = Button::new(Text::new(text))
-                    .width(Length::Fixed(50.0))
-                    .height(Length::Fixed(50.0));
-
-                // Disable button if the game is over
-                if !self.game_over {
-                    button = button.on_press(Message::TicTacToe(TicTacToeMessage::MakeMove(row_index, col)));
-                }
-
                 row_widget = row_widget.push(
                     Button::new(Text::new(text))
                         .on_press(Message::TicTacToe(TicTacToeMessage::MakeMove(
