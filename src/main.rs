@@ -1,6 +1,8 @@
+use std::cmp::PartialEq;
 use iced::{Application, Command, Element, Length, Settings};
 use iced::widget::{Button, Column, Container, Row, Text};
 
+#[derive(Clone)]
 struct GameState {
     board: [[Option<Player>; 3]; 3],
     current_player: Player,
@@ -19,7 +21,7 @@ struct MenuApp {
     tic_tac_toe: TicTacToe,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum View {
     Menu,
     Option1,
@@ -78,7 +80,7 @@ impl Default for GameState {
 impl GameState {
     fn make_move(&mut self, row: usize, col: usize) -> bool {
         if self.board[row][col].is_none() {
-            self.board[row][col] = Some(self.current_player.clone());
+            self.board[row][col] = Some(self.current_player);
             self.current_player = match self.current_player {
                 Player::X => Player::O,
                 Player::O => Player::X,
@@ -87,6 +89,72 @@ impl GameState {
         } else {
             false
         }
+    }
+
+    fn best_move(&self) -> Option<(usize, usize)> {
+        let mut best_score = i32::MIN;
+        let mut best_move = None;
+
+        for row in 0..3 {
+            for col in 0..3 {
+                if self.board[row][col].is_none() {
+                    let mut board_copy = self.clone();
+                    board_copy.board[row][col] = Some(Player::O);
+                    let score = board_copy.minimax(0, false);
+                    if score > best_score {
+                        best_score = score;
+                        best_move = Some((row, col));
+                    }
+                }
+            }
+        }
+
+        best_move
+    }
+
+    fn minimax(&self, depth: i32, is_maximizing: bool) -> i32 {
+        if let Some(winner) = self.check_win() {
+            return match winner {
+                Player::X => -10 + depth,
+                Player::O => 10 - depth,
+            };
+        }
+
+        if self.is_draw() {
+            return 0;
+        }
+
+        if is_maximizing {
+            let mut best_score = i32::MIN;
+            for row in 0..3 {
+                for col in 0..3 {
+                    if self.board[row][col].is_none() {
+                        let mut board_copy = self.clone();
+                        board_copy.board[row][col] = Some(Player::O);
+                        let score = board_copy.minimax(depth + 1, false);
+                        best_score = best_score.max(score);
+                    }
+                }
+            }
+            best_score
+        } else {
+            let mut best_score = i32::MAX;
+            for row in 0..3 {
+                for col in 0..3 {
+                    if self.board[row][col].is_none() {
+                        let mut board_copy = self.clone();
+                        board_copy.board[row][col] = Some(Player::X);
+                        let score = board_copy.minimax(depth + 1, true);
+                        best_score = best_score.min(score);
+                    }
+                }
+            }
+            best_score
+        }
+    }
+
+    fn is_draw(&self) -> bool {
+        self.board.iter().all(|row| row.iter().all(|&cell| cell.is_some()))
     }
 
     fn check_win(&self) -> Option<Player> {
@@ -169,7 +237,7 @@ impl Application for MenuApp {
                         self.current_view = View::Option1; // Go to Option 1 view (Single player)
                     }
                     MenuOption::Option2 => {
-                        self.current_view = View::Option2; // Go to Option 1 view (Multiplayer)
+                        self.current_view = View::Option2; // Go to Option 2 view (Multiplayer)
                         self.tic_tac_toe.game_over = false;
                         self.tic_tac_toe.game_state.clean_board();
                     }
@@ -182,13 +250,21 @@ impl Application for MenuApp {
                 }
             },
             Message::TicTacToe(tic_tac_toe_message) => {
-                // Update TicTacToe game state with mutable reference to game_state
                 match tic_tac_toe_message {
                     TicTacToeMessage::MakeMove(row, col) => {
                         if !self.tic_tac_toe.game_over && self.tic_tac_toe.game_state.make_move(row, col) {
                             if let Some(player) = self.tic_tac_toe.game_state.check_win() {
                                 println!("Player {:?} wins!", player);
                                 self.tic_tac_toe.game_over = true;
+                            } else if self.current_view == View::Option1 {
+                                // Make AI move for Option 1 (Single player)
+                                if let Some((ai_row, ai_col)) = self.tic_tac_toe.game_state.best_move() {
+                                    self.tic_tac_toe.game_state.make_move(ai_row, ai_col);
+                                    if let Some(player) = self.tic_tac_toe.game_state.check_win() {
+                                        println!("Player {:?} wins!", player);
+                                        self.tic_tac_toe.game_over = true;
+                                    }
+                                }
                             }
                         }
                     }
@@ -206,8 +282,8 @@ impl Application for MenuApp {
     fn view(&self) -> Element<Self::Message> {
         match self.current_view {
             View::Menu => self.view_menu(),
-            View::Option1 => self.view_option1(),
-            View::Option2 => self.tic_tac_toe.view()
+            View::Option1 => self.tic_tac_toe.view(),  // Single player
+            View::Option2 => self.tic_tac_toe.view()   // Multiplayer
         }
     }
 }
@@ -279,9 +355,7 @@ impl TicTacToe {
 
                 row_widget = row_widget.push(
                     Button::new(Text::new(text))
-                        .on_press(Message::TicTacToe(TicTacToeMessage::MakeMove(
-                            row_index, col,
-                        )))
+                        .on_press(Message::TicTacToe(TicTacToeMessage::MakeMove(row_index, col)))
                         .width(Length::Fixed(50.0))
                         .height(Length::Fixed(50.0)),
                 );
