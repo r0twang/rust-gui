@@ -16,7 +16,6 @@ enum Player {
 
 #[derive(Default)]
 struct MenuApp {
-    selected_option: Option<MenuOption>,
     current_view: View,
     tic_tac_toe: TicTacToe,
 }
@@ -247,6 +246,7 @@ impl Application for MenuApp {
                 },
                 MenuMessage::BackToMenu => {
                     self.current_view = View::Menu; // Navigate back to the main menu
+                    self.tic_tac_toe.game_state.clean_board();
                 }
             },
             Message::TicTacToe(tic_tac_toe_message) => {
@@ -317,26 +317,6 @@ impl MenuApp {
             .center_y()
             .into()
     }
-
-    fn view_option1(&self) -> Element<Message> {
-        let back_button = Button::new(Text::new("Back to Menu"))
-            .on_press(Message::Menu(MenuMessage::BackToMenu))
-            .width(Length::Shrink);
-
-        let content = Column::new()
-            .push(Text::new("This is Option 1 view"))
-            .push(back_button)
-            .spacing(20)
-            .padding(20)
-            .align_items(iced::Alignment::Center);
-
-        Container::new(content)
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .center_x()
-            .center_y()
-            .into()
-    }
 }
 
 impl TicTacToe {
@@ -368,7 +348,12 @@ impl TicTacToe {
             .on_press(Message::TicTacToe(TicTacToeMessage::CleanBoard))
             .width(Length::Shrink);
 
+        let back_button = Button::new(Text::new("Back to Menu"))
+            .on_press(Message::Menu(MenuMessage::BackToMenu))
+            .width(Length::Shrink);
+
         column = column.push(clear_button);
+        column = column.push(back_button);
 
         Container::new(column)
             .width(Length::Fill)
