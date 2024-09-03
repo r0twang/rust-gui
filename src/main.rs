@@ -1,7 +1,6 @@
 use std::cmp::PartialEq;
 use iced::{Application, Command, Element, Length, Settings};
-use iced::widget::{Button, Column, Container, Row, Text};
-
+use iced::widget::{image, Button, Column, Container, Row, Text};
 #[derive(Clone)]
 struct GameState {
     board: [[Option<Player>; 3]; 3],
@@ -302,7 +301,13 @@ impl MenuApp {
             .on_press(Message::Menu(MenuMessage::Select(MenuOption::Option3)))
             .width(Length::Shrink);
 
+        let logo_handle = image::Handle::from_path("resources/ttt.bmp");
+            let logo = image::Image::new(logo_handle)
+            .width(Length::Shrink)
+            .height(Length::Shrink);
+
         let content = Column::new()
+            .push(logo)
             .push(button_option1)
             .push(button_option2)
             .push(button_option3)
@@ -321,10 +326,12 @@ impl MenuApp {
 
 impl TicTacToe {
     fn view(&self) -> Element<Message> {
-        let mut column = Column::new();
+        let mut column = Column::new()
+            .align_items(iced::Alignment::Center);
 
         for (row_index, row_cells) in self.game_state.board.iter().enumerate() {
-            let mut row_widget = Row::new();
+            let mut row_widget = Row::new()
+                .align_items(iced::Alignment::Center);
 
             for (col, cell) in row_cells.iter().enumerate() {
                 let text = match cell {
@@ -358,6 +365,8 @@ impl TicTacToe {
         Container::new(column)
             .width(Length::Fill)
             .height(Length::Fill)
+            .center_x()
+            .center_y()
             .into()
     }
 }
