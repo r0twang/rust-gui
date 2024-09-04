@@ -1,6 +1,9 @@
 use std::cmp::PartialEq;
 use iced::{Application, Command, Element, Length, Settings};
+use iced::alignment::{Horizontal, Vertical};
+use iced::Length::{Fill, Shrink};
 use iced::widget::{image, Button, Column, Container, Row, Text};
+
 #[derive(Clone)]
 struct GameState {
     board: [[Option<Player>; 3]; 3],
@@ -306,7 +309,11 @@ impl MenuApp {
             .width(Length::Shrink)
             .height(Length::Shrink);
 
-        let content = Column::new()
+        let signature = Text::new("2024 by rotwang")
+            .horizontal_alignment(Horizontal::Left)
+            .vertical_alignment(Vertical::Bottom);
+
+        let menu_content = Column::new()
             .push(logo)
             .push(button_option1)
             .push(button_option2)
@@ -315,11 +322,26 @@ impl MenuApp {
             .padding(20)
             .align_items(iced::Alignment::Center);
 
-        Container::new(content)
+        let main_menu = Container::new(menu_content)
+            .width(Shrink)
+            .center_x()
+            .center_y();
+
+        let signature_container = Container::new(signature)
+            .width(Fill)
+            .padding(10)
+            .align_x(Horizontal::Left)
+            .align_y(Vertical::Bottom);
+
+        let layout = Column::new()
+            .push(main_menu)
+            .push(signature_container)
+            .height(Length::Fill)
+            .align_items(iced::Alignment::Center);
+
+        Container::new(layout)
             .width(Length::Fill)
             .height(Length::Fill)
-            .center_x()
-            .center_y()
             .into()
     }
 }
